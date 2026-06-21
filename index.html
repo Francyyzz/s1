@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Solo Leveling">
+<meta name="theme-color" content="#0a0a0a">
+<title>Solo Leveling</title>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1e1e1e;
+  --border: #2a2a2a;
+  --text: #f0f0f0;
+  --muted: #666;
+  --dim: #444;
+  --blue: #3b82f6;
+  --blue-dim: #1e3a5f;
+  --green: #22c55e;
+  --green-dim: #14532d;
+  --amber: #f59e0b;
+  --amber-dim: #451a03;
+  --red: #ef4444;
+  --red-dim: #450a0a;
+  --safe: env(safe-area-inset-bottom, 20px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; overflow: hidden; }
+
+/* ── Layout ── */
+#app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
+#content { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 0 0 calc(70px + var(--safe)) 0; }
+#nav { position: fixed; bottom: 0; left: 0; right: 0; height: calc(56px + var(--safe)); padding-bottom: var(--safe); background: var(--surface); border-top: 1px solid var(--border); display: flex; z-index: 100; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; color: var(--muted); font-size: 10px; cursor: pointer; transition: color .15s; padding-top: 8px; }
+.nav-btn.active { color: var(--blue); }
+.nav-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── Header ── */
+.page-header { padding: 16px 16px 8px; }
+.sys-tag { font-size: 10px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+.page-title { font-size: 22px; font-weight: 700; color: var(--text); }
+.page-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+/* ── Cards ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin: 0 16px 12px; overflow: hidden; }
+.card-hdr { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.card-hdr-title { font-size: 14px; font-weight: 600; flex: 1; }
+.card-hdr-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.card-body { padding: 12px 16px; }
+
+/* ── Stat row ── */
+.stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; padding: 0 16px 12px; }
+.stat { background: var(--surface); border-radius: 12px; padding: 12px 10px; text-align: center; border: 1px solid var(--border); }
+.stat-val { font-size: 20px; font-weight: 700; }
+.stat-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* ── Exercise list ── */
+.ex-item { display: flex; align-items: baseline; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.ex-item:last-child { border-bottom: none; }
+.ex-sets { font-size: 12px; font-weight: 600; color: var(--blue); min-width: 80px; flex-shrink: 0; }
+.ex-name { font-size: 13px; color: var(--text); line-height: 1.4; }
+
+/* ── Log input ── */
+.log-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.log-row:last-child { border-bottom: none; }
+.log-label { font-size: 13px; color: var(--muted); flex: 1; }
+.log-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; font-weight: 600; width: 70px; padding: 6px 10px; text-align: center; -webkit-appearance: none; }
+.log-input:focus { outline: none; border-color: var(--blue); }
+
+/* ── Save btn ── */
+.save-btn { width: 100%; background: var(--blue); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 12px; letter-spacing: .02em; transition: opacity .15s; }
+.save-btn:active { opacity: .8; }
+
+/* ── Note box ── */
+.note-box { background: var(--surface2); border-radius: 10px; padding: 10px 12px; font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
+.note-box.warn { border-left: 3px solid var(--amber); color: var(--amber); background: var(--amber-dim); }
+.note-box.danger { border-left: 3px solid var(--red); color: #fca5a5; background: var(--red-dim); }
+.note-box.info { border-left: 3px solid var(--blue); color: #93c5fd; background: var(--blue-dim); }
+
+/* ── Grocery ── */
+.grocery-cat { padding: 10px 16px 4px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.grocery-item { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+.grocery-item:active { background: var(--surface2); }
+.grocery-item.checked .g-name { text-decoration: line-through; color: var(--muted); }
+.check-box { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .15s; background: var(--surface); }
+.grocery-item.checked .check-box { background: var(--green); border-color: var(--green); }
+.check-icon { display: none; }
+.grocery-item.checked .check-icon { display: block; width: 13px; height: 13px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.g-name { font-size: 14px; flex: 1; }
+.g-amount { font-size: 12px; color: var(--muted); }
+
+/* ── Nutrition ── */
+.meal-block { margin: 0 16px 12px; }
+.meal-hdr2 { display: flex; align-items: center; gap: 8px; padding: 12px 0 8px; }
+.meal-time { font-size: 11px; color: var(--muted); min-width: 60px; }
+.meal-name2 { font-size: 14px; font-weight: 600; flex: 1; }
+.meal-kcal2 { font-size: 12px; color: var(--muted); }
+.food-item { font-size: 13px; color: var(--dim); padding: 4px 0 4px 12px; border-left: 2px solid var(--border); margin-bottom: 3px; line-height: 1.5; }
+.food-item span { color: var(--blue); font-size: 11px; font-weight: 600; }
+
+/* ── PR tab ── */
+.pr-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+.pr-row:last-child { border-bottom: none; }
+.pr-name { font-size: 13px; flex: 1; color: var(--text); }
+.pr-inputs { display: flex; gap: 6px; }
+.pr-input-wrap { text-align: center; }
+.pr-input-lbl { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+.pr-inp { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; font-weight: 700; width: 52px; padding: 5px 4px; text-align: center; -webkit-appearance: none; }
+.pr-inp:focus { outline: none; border-color: var(--blue); }
+.pr-delta { font-size: 13px; font-weight: 700; min-width: 36px; text-align: right; }
+
+/* ── Week nav ── */
+.week-nav { display: flex; gap: 8px; padding: 0 16px 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.week-nav::-webkit-scrollbar { display: none; }
+.week-pill { flex-shrink: 0; padding: 7px 16px; border-radius: 20px; border: 1.5px solid var(--border); background: none; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .15s; }
+.week-pill.active { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
+
+/* ── Day grid ── */
+.day-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; padding: 0 16px 12px; }
+.day-dot { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+.day-circle { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--muted); transition: all .15s; }
+.day-dot.active .day-circle { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
+.day-dot.done .day-circle { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+.day-lbl { font-size: 9px; color: var(--muted); }
+
+/* ── Macro bar ── */
+.macro-bar { padding: 0 16px 16px; }
+.macro-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.macro-row span { font-weight: 600; color: var(--text); }
+.bar-track { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+
+/* screens */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* toast */
+.toast { position: fixed; bottom: calc(70px + var(--safe) + 10px); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; opacity: 0; transition: all .25s; z-index: 200; white-space: nowrap; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+<div id="content">
+
+<!-- ══ TRAINING SCREEN ══ -->
+<div class="screen active" id="screen-train">
+  <div class="page-header">
+    <div class="sys-tag">⚡ системное уведомление</div>
+    <div class="page-title">Тренировки</div>
+    <div class="page-sub" id="train-sub">Выбери неделю и день</div>
+  </div>
+
+  <div class="week-nav" id="week-nav">
+    <button class="week-pill active" onclick="selectWeek(1,this)">Нед. 1 — Пробуждение</button>
+    <button class="week-pill" onclick="selectWeek(2,this)">Нед. 2 — Восхождение</button>
+    <button class="week-pill" onclick="selectWeek(3,this)">Нед. 3 — Перегрузка</button>
+    <button class="week-pill" onclick="selectWeek(4,this)">Нед. 4 — Финал</button>
+  </div>
+
+  <div class="day-grid" id="day-grid"></div>
+
+  <div id="workout-card"></div>
+</div>
+
+<!-- ══ LOG SCREEN ══ -->
+<div class="screen" id="screen-log">
+  <div class="page-header">
+    <div class="sys-tag">⚡ дневник</div>
+    <div class="page-title">Записать тренировку</div>
+    <div class="page-sub" id="log-day-label">День не выбран</div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="log-row">
+        <div class="log-label">Подтягивания (всего повторов)</div>
+        <input class="log-input" type="number" id="l-pull" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="log-row">
+        <div class="log-label">Отжимания (всего повторов)</div>
+        <input class="log-input" type="number" id="l-push" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="log-row">
+        <div class="log-label">Время тренировки (мин)</div>
+        <input class="log-input" type="number" id="l-time" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="log-row">
+        <div class="log-label">Самочувствие (1–10)</div>
+        <input class="log-input" type="number" id="l-feel" min="1" max="10" placeholder="7" inputmode="numeric">
+      </div>
+      <div class="log-row">
+        <div class="log-label">Колено ок?</div>
+        <div style="display:flex;gap:8px;">
+          <button id="knee-yes" onclick="setKnee('yes')" style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer">Да</button>
+          <button id="knee-no" onclick="setKnee('no')" style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer">Нет</button>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveLog()">Сохранить ⚡</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-hdr-title">Рекорды (PR)</div></div>
+    <div class="card-body" id="pr-list">
+      <div class="pr-row">
+        <div class="pr-name">Подтягивания max</div>
+        <div class="pr-inputs">
+          <div class="pr-input-wrap"><div class="pr-input-lbl">Д.1</div><input class="pr-inp" type="number" id="pr-pull-1" inputmode="numeric" onchange="savePR()"></div>
+          <div class="pr-input-wrap"><div class="pr-input-lbl">Д.14</div><input class="pr-inp" type="number" id="pr-pull-14" inputmode="numeric" onchange="savePR()"></div>
+          <div class="pr-input-wrap"><div class="pr-input-lbl">Д.28</div><input class="pr-inp" type="number" id="pr-pull-28" inputmode="numeric" onchange="savePR()"></div>
+        </div>
+        <div class="pr-delta" id="delta-pull">—</div>
+      </div>
+      <div class="pr-row">
+        <div class="pr-name">Отжимания max</div>
+        <div class="pr-inputs">
+          <div class="pr-input-wrap"><div class="pr-input-lbl">Д.1</div><input class="pr-inp" type="number" id="pr-push-1" inputmode="numeric" onchange="savePR()"></div>
+          <div class="pr-input-wrap"><div class="pr-input-lbl">Д.14</div><input class="pr-inp" type="number" id="pr-push-14" inputmode="numeric" onchange="savePR()"></div>
+          <div class="pr-input-wrap"><div class="pr-input-lbl">Д.28</div><input class="pr-inp" type="number" id="pr-push-28" inputmode="numeric" onchange="savePR()"></div>
+        </div>
+        <div class="pr-delta" id="delta-push">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NUTRITION SCREEN ══ -->
+<div class="screen" id="screen-food">
+  <div class="page-header">
+    <div class="sys-tag">⚡ питание</div>
+    <div class="page-title">Рацион дня</div>
+    <div class="page-sub">2350 ккал · 170г белка</div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat"><div class="stat-val" style="color:var(--blue)">2350</div><div class="stat-lbl">ккал</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--green)">170г</div><div class="stat-lbl">белок</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--amber)">230г</div><div class="stat-lbl">углеводы</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--red)">70г</div><div class="stat-lbl">жиры</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-title">Завтрак дома</div>
+      <div class="card-hdr-badge" style="background:var(--green-dim);color:#86efac">~620 ккал</div>
+    </div>
+    <div class="card-body">
+      <div class="food-item">Яйца 3 шт. <span>19г Б · 15г Ж</span></div>
+      <div class="food-item">Овсянка 80г <span>10г Б · 54г У</span></div>
+      <div class="food-item">Банан или ягоды <span>27г У</span></div>
+      <div class="food-item" style="color:var(--muted)">или: греческий йогурт 200г + геркулес 60г + 2 яйца</div>
+      <div class="note-box info" style="margin-top:8px">За 30–60 мин до тренировки если тренируешься утром</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-title">Обед на работе</div>
+      <div class="card-hdr-badge" style="background:var(--blue-dim);color:#93c5fd">~720 ккал</div>
+    </div>
+    <div class="card-body">
+      <div class="food-item">Курица гриль / запечённая <span>40–45г Б</span></div>
+      <div class="food-item">Гречка / рис / картофель — 1 порция <span>50г У</span></div>
+      <div class="food-item">Салат без майонеза (масло) <span>5–8г Ж</span></div>
+      <div class="note-box warn" style="margin-top:8px">Шаурма: без соуса, двойное мясо · Бургер: без верхней булки · Пицца: 2 куска max</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-title">Перекус</div>
+      <div class="card-hdr-badge" style="background:var(--amber-dim);color:#fcd34d">~270 ккал</div>
+    </div>
+    <div class="card-body">
+      <div class="food-item">Творог 200г + ягоды <span>34г Б</span></div>
+      <div class="food-item">или греческий йогурт 200г <span>20г Б</span></div>
+      <div class="food-item">или 2 яйца + огурец <span>12г Б</span></div>
+      <div class="food-item">или кефир 300мл + банан <span>9г Б · 27г У</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-title">Ужин у мамы</div>
+      <div class="card-hdr-badge" style="background:#1c1107;color:#fcd34d">~740 ккал</div>
+    </div>
+    <div class="card-body">
+      <div class="food-item">Мясо / рыба / курица — акцент на белок <span>40–50г Б</span></div>
+      <div class="food-item">Овощи тушёные / свежие — ½ тарелки <span>5г У</span></div>
+      <div class="food-item">Гарнир — уменьши в 1.5–2 раза <span>30–40г У</span></div>
+      <div class="note-box danger" style="margin-top:8px">Если ужин после 21:00 — только белок + овощи, гарнир минимум</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-hdr-title">Правила воды</div></div>
+    <div class="card-body">
+      <div class="note-box info">2.5–3 литра в день. Стакан воды перед каждым приёмом пищи.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GROCERY SCREEN ══ -->
+<div class="screen" id="screen-shop">
+  <div class="page-header">
+    <div class="sys-tag">⚡ закупка</div>
+    <div class="page-title">Список покупок</div>
+    <div class="page-sub" id="shop-progress">Отмечай по мере покупки</div>
+  </div>
+
+  <div id="grocery-list"></div>
+
+  <div style="padding:0 16px 8px;display:flex;gap:8px">
+    <button onclick="clearGrocery()" style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer">Сбросить</button>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<!-- ══ NAV ══ -->
+<nav id="nav">
+  <button class="nav-btn active" onclick="showScreen('train',this)">
+    <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M12 6.5v11M4 12h2M18 12h2"/></svg>
+    Тренировки
+  </button>
+  <button class="nav-btn" onclick="showScreen('log',this)">
+    <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2m-6 9l2 2 4-4"/></svg>
+    Дневник
+  </button>
+  <button class="nav-btn" onclick="showScreen('food',this)">
+    <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+    Питание
+  </button>
+  <button class="nav-btn" onclick="showScreen('shop',this)">
+    <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+    Покупки
+  </button>
+</nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const WORKOUTS = {
+  1: [
+    { name:"Тяга верха", type:"Тяни", exercises:[
+      {sets:"3×max",name:"Подтягивания широким хватом — контроль, без рывков"},
+      {sets:"3×10",name:"Австралийские подтягивания на брусьях"},
+      {sets:"3×12",name:"Тяга в висе (grip)"},
+      {sets:"2×30сек",name:"Вис на турнике — декомпрессия"}
+    ], note:"Темп: 2 сек вверх — 3 сек вниз. Отдых 90 сек."},
+    { name:"Толчок + кор", type:"Толкай", exercises:[
+      {sets:"4×8",name:"Отжимания — грудь касается пола, локти 45°"},
+      {sets:"3×8",name:"Отжимания на брусьях (наклон вперёд)"},
+      {sets:"3×10",name:"Отжимания широкие (акцент грудь)"},
+      {sets:"3×20",name:"Mountain climber — медленно"},
+      {sets:"3×15",name:"Подъём ног в висе (колени к груди)"}
+    ], note:"Отдых 60–75 сек. Кор без рывков."},
+    { name:"Ноги + мобильность", type:"Ноги", exercises:[
+      {sets:"4×12",name:"Приседания до параллели (колено не за носок!)"},
+      {sets:"3×10/сторону",name:"Выпад НАЗАД (не вперёд)"},
+      {sets:"3×15",name:"Ягодичный мостик двумя ногами"},
+      {sets:"3×12",name:"Румынская тяга на одной ноге (баланс)"},
+      {sets:"5 мин",name:"Мобильность: тазобедренный, голеностоп, колено"}
+    ], note:"Колено: не терпи острую боль. Лёд после если дискомфорт.", warn:true},
+    { name:"Активное восстановление", type:"Отдых+", exercises:[
+      {sets:"20–30 мин",name:"Прогулка быстрым шагом (не бег)"},
+      {sets:"10 мин",name:"Растяжка: плечи, грудь, подколенные"},
+      {sets:"3×30сек",name:"Планка статическая"}
+    ], note:"Рост происходит во время отдыха. Это часть Системы."},
+    { name:"Тяга + бицепс", type:"Тяни", exercises:[
+      {sets:"3×max",name:"Подтягивания обратным хватом (супинация)"},
+      {sets:"3×12",name:"Австралийские подтягивания"},
+      {sets:"3×10",name:"Подтягивания нейтральным хватом"},
+      {sets:"2×45сек",name:"Вис на согнутых руках (изометрия)"}
+    ], note:"Суммируй повторы — записывай. Это твой XP."},
+    { name:"Полное тело AMRAP", type:"Комплекс", exercises:[
+      {sets:"5 раундов",name:"5 подтяг + 10 отжим + 15 приседов + 20сек планка"},
+      {sets:"2 мин",name:"Отдых между раундами"}
+    ], note:"Не вытягиваешь 5 подтягиваний — уменьши до 3. Форма важнее."},
+    { name:"Мобильность + вис", type:"Отдых+", exercises:[
+      {sets:"3×1мин",name:"Пассивный вис (декомпрессия)"},
+      {sets:"15 мин",name:"Растяжка всего тела"},
+      {sets:"5 мин",name:"VMO упражнения, стретч квадрицепса"}
+    ], note:"Неделя 1 пройдена. Система оценивает прогресс."}
+  ],
+  2: [
+    { name:"Тяга — объём", type:"Тяни", exercises:[
+      {sets:"5×5",name:"Подтягивания широким хватом (силовой режим, отдых 2 мин)"},
+      {sets:"3×12",name:"Австралийские подтягивания с паузой 2сек вверху"},
+      {sets:"3×8",name:"Подтягивания с касанием груди"},
+      {sets:"3×12",name:"Тяга на прямых руках (lat activation)"}
+    ], note:"5×5 — программа силы. Записывай сколько вышло."},
+    { name:"Жим + трицепс", type:"Толкай", exercises:[
+      {sets:"5×8",name:"Отжимания (темп 2-1-2)"},
+      {sets:"4×8",name:"Отжимания на брусьях вертикально (трицепс)"},
+      {sets:"3×10",name:"Алмазные отжимания"},
+      {sets:"3×12",name:"Пайк отжимания (имитация жима стоя)"},
+      {sets:"3×20",name:"Подъёмы прямых ног в висе"}
+    ], note:"Брусья вертикально — грудь не наклонять вперёд."},
+    { name:"Ноги — сила", type:"Ноги", exercises:[
+      {sets:"4×15",name:"Присед (глубина комфортная для колена)"},
+      {sets:"3×8/сторону",name:"Болгарский сплит-присед (первый раз — ограниченная амплитуда)"},
+      {sets:"4×15",name:"Ягодичный мостик — пауза 2сек наверху"},
+      {sets:"3×12",name:"Обратный выпад с балансом"},
+      {sets:"3×15",name:"Подъём на носки"}
+    ], note:"Болгарский первый раз — без полного опускания. Слушай колено.", warn:true},
+    { name:"Активный отдых", type:"Отдых+", exercises:[
+      {sets:"30 мин",name:"Прогулка или лёгкая езда"},
+      {sets:"10 мин",name:"Foam rolling / самомассаж ног"},
+      {sets:"5 мин",name:"VMO упражнения — стабилизация колена"}
+    ], note:""},
+    { name:"Тяга + дельты", type:"Тяни", exercises:[
+      {sets:"4×max",name:"Подтягивания (все хваты: широкий/обратный/нейтральный)"},
+      {sets:"3×12",name:"Горизонтальная тяга на брусьях"},
+      {sets:"4×10",name:"Пайк отжимания (дельты)"},
+      {sets:"3×10",name:"Подъём в L-sit в висе"}
+    ], note:"Цель на неделе: +15% к объёму неделя 1."},
+    { name:"EMOM 20 мин", type:"Комплекс", exercises:[
+      {sets:"EMOM 20 мин",name:"Каждую минуту: 5 подтяг + 8 отжиманий"},
+      {sets:"3×15",name:"Ягодичный мостик"},
+      {sets:"3×20",name:"Планка-толчки (прямые руки ↔ локти)"}
+    ], note:"EMOM = Every Minute On the Minute. Сила + кардио."},
+    { name:"Тест — чекпоинт", type:"Тест", exercises:[
+      {sets:"1×max",name:"Подтягивания широким хватом — ЗАПИШИ"},
+      {sets:"1×max",name:"Отжимания — ЗАПИШИ"},
+      {sets:"10 мин",name:"Растяжка и вис"}
+    ], note:"Сравни с Неделей 1. Система фиксирует прогресс."}
+  ],
+  3: [
+    { name:"Тяга — ударная", type:"Тяни", exercises:[
+      {sets:"6×4",name:"Подтягивания с паузой 3сек вверху"},
+      {sets:"4×10",name:"Австралийские подтягивания"},
+      {sets:"4×8",name:"Негативы — опускание 5 сек"},
+      {sets:"3×45сек",name:"Вис активный (лопатки в замке)"}
+    ], note:"Пауза вверху — лучший метод для прорыва в повторах."},
+    { name:"Жим — 100 отжиманий", type:"Толкай", exercises:[
+      {sets:"100 итого",name:"Отжимания любым способом — добить 100 за тренировку"},
+      {sets:"4×10",name:"Отжимания на брусьях — полная амплитуда"},
+      {sets:"4×12",name:"Пайк отжимания"},
+      {sets:"3×25",name:"Подъём ног в висе"}
+    ], note:"10×10 или 20+15+10... — главное финишировать."},
+    { name:"Ноги — объём", type:"Ноги", exercises:[
+      {sets:"5×20",name:"Присед — высокий объём"},
+      {sets:"4×10/сторону",name:"Болгарский сплит-присед"},
+      {sets:"5×20",name:"Ягодичный мостик"},
+      {sets:"3×15",name:"Обратный выпад"},
+      {sets:"3×15",name:"Боковые выпады (медленно, без боли)"}
+    ], note:"После ног — 10 мин заминка. Лёд если есть дискомфорт.", warn:true},
+    { name:"Активный отдых", type:"Отдых+", exercises:[
+      {sets:"40 мин",name:"Прогулка или плавание"},
+      {sets:"10 мин",name:"VMO упражнения, стретч IT-банда"}
+    ], note:"Сон 8 часов минимум."},
+    { name:"Grease the Groove", type:"Тяни", exercises:[
+      {sets:"Каждые 30 мин",name:"3 подтягивания в течение всего дня (не до отказа)"},
+      {sets:"4×12",name:"Пайк отжимания"},
+      {sets:"3×10",name:"Подтягивания за голову (если плечи позволяют)"},
+      {sets:"3×10сек",name:"L-sit попытки в висе"}
+    ], note:"Метод Советских спецназовцев. Частые подходы, не до отказа."},
+    { name:"AMRAP 25 мин", type:"Комплекс", exercises:[
+      {sets:"AMRAP 25 мин",name:"5 подтяг + 10 отжим + 15 приседов"},
+      {sets:"Запиши",name:"Количество раундов — личный рекорд"}
+    ], note:"AMRAP = As Many Rounds As Possible. Пробей свой предел."},
+    { name:"Полное восстановление", type:"Отдых", exercises:[
+      {sets:"Сегодня",name:"Только растяжка, прогулка, контрастный душ"},
+      {sets:"5 мин",name:"Колено — лёд если воспаление, VMO упражнения"}
+    ], note:"3 недели позади. Финальная неделя — деловая."}
+  ],
+  4: [
+    { name:"Тяга — пик PR", type:"Тяни", exercises:[
+      {sets:"1×max (PR!)",name:"Подтягивания — максимум без остановки"},
+      {sets:"5×3",name:"Подтягивания с 5сек паузой вверху (отдых 3 мин)"},
+      {sets:"4×10",name:"Австралийские подтягивания"},
+      {sets:"3×30сек",name:"Вис на согнутых руках"}
+    ], note:"Запиши PR. Сравни с Днём 1. Разница — твой прогресс."},
+    { name:"Жим — пик PR", type:"Толкай", exercises:[
+      {sets:"1×max (PR!)",name:"Отжимания — личный рекорд"},
+      {sets:"4×10",name:"Отжимания на брусьях с паузой внизу 2сек"},
+      {sets:"3×12",name:"Алмазные отжимания"},
+      {sets:"4×15",name:"Пайк отжимания"}
+    ], note:"Кор: L-sit в висе 3 подхода на каждой тренировке."},
+    { name:"Ноги — пик", type:"Ноги", exercises:[
+      {sets:"5×12",name:"Болгарский сплит-присед"},
+      {sets:"4×25",name:"Ягодичный мостик"},
+      {sets:"4×15",name:"Приседания (темп 3-1-3)"},
+      {sets:"3×8",name:"Пистолет с поддержкой (держась за турник — только без боли)"}
+    ], note:"Пистолет: только если колено не беспокоит.", warn:true},
+    { name:"Активный отдых", type:"Отдых+", exercises:[
+      {sets:"30 мин",name:"Прогулка"},
+      {sets:"15 мин",name:"Полная растяжка тела"}
+    ], note:""},
+    { name:"Финальный рейд AMRAP", type:"Комплекс", exercises:[
+      {sets:"AMRAP 30 мин",name:"5 подтяг + 10 отжим + 15 приседов + 20сек вис"},
+      {sets:"Запиши",name:"Раунды — сравни с Неделей 3"}
+    ], note:"Это финальный рейд. Выложись полностью."},
+    { name:"Лёгкая тяга", type:"Отдых+", exercises:[
+      {sets:"3×5",name:"Подтягивания — легко, без усилий"},
+      {sets:"15 мин",name:"Растяжка и мобильность"}
+    ], note:"Готовим тело к финальному тесту. Никакой интенсивности."},
+    { name:"Ранговый экзамен", type:"Тест", exercises:[
+      {sets:"1×max (PR!)",name:"Подтягивания широким хватом — ЗАПИШИ"},
+      {sets:"1×max (PR!)",name:"Отжимания — ЗАПИШИ"},
+      {sets:"AMRAP 25 мин",name:"5+10+15 — ЗАПИШИ РАУНДЫ"},
+      {sets:"1×max",name:"Вис на согнутых руках — ЗАПИШИ"}
+    ], note:"Система подводит итог. Сравни всё с Днём 1."}
+  ]
+};
+
+const TYPE_STYLES = {
+  "Тяни":     {bg:"var(--blue-dim)",color:"#93c5fd"},
+  "Толкай":   {bg:"var(--green-dim)",color:"#86efac"},
+  "Ноги":     {bg:"var(--amber-dim)",color:"#fcd34d"},
+  "Комплекс": {bg:"#2d0a1e",color:"#f9a8d4"},
+  "Отдых+":   {bg:"#1a1a1a",color:"var(--muted)"},
+  "Отдых":    {bg:"#1a1a1a",color:"var(--muted)"},
+  "Тест":     {bg:"#0c1a3a",color:"#93c5fd"},
+};
+
+const DAY_LABELS = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+
+const GROCERIES = [
+  {cat:"Белок",items:[
+    {name:"Куриная грудка",amount:"1.5 кг"},
+    {name:"Куриное бедро без кожи",amount:"500 г"},
+    {name:"Рыба (горбуша / треска)",amount:"600 г"},
+    {name:"Тунец в с/с (банки)",amount:"2 × 185 г"},
+    {name:"Говяжий фарш (опц.)",amount:"500 г"},
+  ]},
+  {cat:"Молочка / Яйца",items:[
+    {name:"Яйца куриные",amount:"15–20 шт"},
+    {name:"Творог 5%",amount:"1 кг (2 пачки)"},
+    {name:"Греческий йогурт 5%",amount:"4 × 200 г"},
+    {name:"Кефир 1–2.5%",amount:"1 литр"},
+    {name:"Молоко 2.5%",amount:"1 литр"},
+  ]},
+  {cat:"Крупы / Углеводы",items:[
+    {name:"Овсянка крупная",amount:"500 г"},
+    {name:"Гречка",amount:"500 г"},
+    {name:"Рис бурый / белый",amount:"500 г"},
+    {name:"Картофель",amount:"1 кг"},
+    {name:"Цельнозерновой хлеб",amount:"1 буханка"},
+  ]},
+  {cat:"Овощи и фрукты",items:[
+    {name:"Огурцы",amount:"6–8 шт"},
+    {name:"Помидоры",amount:"6–8 шт"},
+    {name:"Болгарский перец",amount:"4–5 шт"},
+    {name:"Капуста / пекинская",amount:"1 кг"},
+    {name:"Замороженные овощи",amount:"1 кг пакет"},
+    {name:"Бананы",amount:"5–7 шт"},
+    {name:"Яблоки / груши",amount:"6–8 шт"},
+    {name:"Замороженные ягоды",amount:"500 г"},
+  ]},
+  {cat:"Жиры / прочее",items:[
+    {name:"Оливковое масло",amount:"250 мл"},
+    {name:"Орехи (грецкие / миндаль)",amount:"200 г"},
+    {name:"Вода питьевая",amount:"6 × 1.5 л"},
+    {name:"Чай / пуэр",amount:"упаковка"},
+    {name:"Соевый соус без сахара",amount:"1 бутылка"},
+  ]},
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentWeek = 1;
+let currentDay = 1;
+let kneeVal = null;
+
+function loadState() {
+  return JSON.parse(localStorage.getItem('sl_state') || '{"logs":{},"grocery":{},"pr":{}}');
+}
+function saveState(s) {
+  localStorage.setItem('sl_state', JSON.stringify(s));
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'shop') renderGrocery();
+  if (id === 'log') renderLogHeader();
+}
+
+// ── TRAINING ─────────────────────────────────────────────────────────────────
+function selectWeek(w, btn) {
+  currentWeek = w;
+  document.querySelectorAll('.week-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDayGrid();
+  selectDay(1);
+}
+
+function renderDayGrid() {
+  const grid = document.getElementById('day-grid');
+  const state = loadState();
+  grid.innerHTML = '';
+  for (let d = 1; d <= 7; d++) {
+    const key = `w${currentWeek}d${d}`;
+    const done = state.logs[key];
+    const isActive = d === currentDay;
+    const div = document.createElement('div');
+    div.className = 'day-dot' + (isActive ? ' active' : '') + (done ? ' done' : '');
+    div.onclick = () => selectDay(d);
+    div.innerHTML = `<div class="day-circle">${d + (currentWeek-1)*7}</div><div class="day-lbl">${DAY_LABELS[d-1]}</div>`;
+    grid.appendChild(div);
+  }
+}
+
+function selectDay(d) {
+  currentDay = d;
+  renderDayGrid();
+  renderWorkout();
+  document.getElementById('train-sub').textContent = `Неделя ${currentWeek} · День ${d + (currentWeek-1)*7}`;
+}
+
+function renderWorkout() {
+  const w = WORKOUTS[currentWeek][currentDay - 1];
+  if (!w) return;
+  const ts = TYPE_STYLES[w.type] || TYPE_STYLES["Тяни"];
+  const globalDay = (currentWeek - 1) * 7 + currentDay;
+  const exHTML = w.exercises.map(e =>
+    `<div class="ex-item"><span class="ex-sets">${e.sets}</span><span class="ex-name">${e.name}</span></div>`
+  ).join('');
+  const noteHTML = w.note ? `<div class="note-box${w.warn?' warn':''}" style="margin-top:8px">${w.note}</div>` : '';
+  document.getElementById('workout-card').innerHTML = `
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">День ${globalDay} — ${w.name}</div>
+        <div class="card-hdr-badge" style="background:${ts.bg};color:${ts.color}">${w.type}</div>
+      </div>
+      <div class="card-body">
+        ${exHTML}
+        ${noteHTML}
+        <button class="save-btn" style="margin-top:12px" onclick="goLog()">Записать результат ↗</button>
+      </div>
+    </div>`;
+}
+
+function goLog() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-log').classList.add('active');
+  document.querySelectorAll('.nav-btn')[1].classList.add('active');
+  renderLogHeader();
+}
+
+function renderLogHeader() {
+  const globalDay = (currentWeek - 1) * 7 + currentDay;
+  const w = WORKOUTS[currentWeek][currentDay - 1];
+  document.getElementById('log-day-label').textContent = `День ${globalDay} — ${w ? w.name : ''}`;
+  const state = loadState();
+  const key = `w${currentWeek}d${currentDay}`;
+  const log = state.logs[key] || {};
+  document.getElementById('l-pull').value = log.pull || '';
+  document.getElementById('l-push').value = log.push || '';
+  document.getElementById('l-time').value = log.time || '';
+  document.getElementById('l-feel').value = log.feel || '';
+  kneeVal = log.knee || null;
+  updateKneeBtns();
+  loadPR();
+}
+
+function setKnee(v) {
+  kneeVal = v;
+  updateKneeBtns();
+}
+function updateKneeBtns() {
+  const yes = document.getElementById('knee-yes');
+  const no = document.getElementById('knee-no');
+  yes.style.background = kneeVal === 'yes' ? 'var(--green-dim)' : 'none';
+  yes.style.color = kneeVal === 'yes' ? '#86efac' : 'var(--muted)';
+  yes.style.borderColor = kneeVal === 'yes' ? 'var(--green)' : 'var(--border)';
+  no.style.background = kneeVal === 'no' ? 'var(--red-dim)' : 'none';
+  no.style.color = kneeVal === 'no' ? '#fca5a5' : 'var(--muted)';
+  no.style.borderColor = kneeVal === 'no' ? 'var(--red)' : 'var(--border)';
+}
+
+function saveLog() {
+  const state = loadState();
+  const key = `w${currentWeek}d${currentDay}`;
+  state.logs[key] = {
+    pull: document.getElementById('l-pull').value,
+    push: document.getElementById('l-push').value,
+    time: document.getElementById('l-time').value,
+    feel: document.getElementById('l-feel').value,
+    knee: kneeVal,
+    ts: Date.now()
+  };
+  saveState(state);
+  renderDayGrid();
+  showToast('⚡ Записано. XP получен.');
+}
+
+// ── PR ────────────────────────────────────────────────────────────────────────
+function loadPR() {
+  const state = loadState();
+  const pr = state.pr || {};
+  ['pull','push'].forEach(k => {
+    [1,14,28].forEach(d => {
+      const el = document.getElementById(`pr-${k}-${d}`);
+      if (el) el.value = pr[`${k}-${d}`] || '';
+    });
+  });
+  updateDeltas();
+}
+function savePR() {
+  const state = loadState();
+  state.pr = state.pr || {};
+  ['pull','push'].forEach(k => {
+    [1,14,28].forEach(d => {
+      const el = document.getElementById(`pr-${k}-${d}`);
+      if (el) state.pr[`${k}-${d}`] = el.value;
+    });
+  });
+  saveState(state);
+  updateDeltas();
+}
+function updateDeltas() {
+  ['pull','push'].forEach(k => {
+    const v1 = parseInt(document.getElementById(`pr-${k}-1`)?.value) || 0;
+    const v28 = parseInt(document.getElementById(`pr-${k}-28`)?.value) || 0;
+    const el = document.getElementById(`delta-${k}`);
+    if (el) {
+      if (v1 && v28) {
+        const d = v28 - v1;
+        el.textContent = (d >= 0 ? '+' : '') + d;
+        el.style.color = d >= 0 ? 'var(--green)' : 'var(--red)';
+      } else {
+        el.textContent = '—';
+        el.style.color = 'var(--muted)';
+      }
+    }
+  });
+}
+
+// ── GROCERY ───────────────────────────────────────────────────────────────────
+function renderGrocery() {
+  const state = loadState();
+  const g = state.grocery || {};
+  const list = document.getElementById('grocery-list');
+  let html = '';
+  GROCERIES.forEach(cat => {
+    html += `<div class="grocery-cat">${cat.cat}</div>`;
+    cat.items.forEach((item, i) => {
+      const key = cat.cat + '_' + i;
+      const checked = g[key] ? ' checked' : '';
+      html += `<div class="grocery-item${checked}" onclick="toggleGrocery('${key}',this)">
+        <div class="check-box">
+          <svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="g-name">${item.name}</div>
+        <div class="g-amount">${item.amount}</div>
+      </div>`;
+    });
+  });
+  list.innerHTML = html;
+  updateShopProgress();
+}
+
+function toggleGrocery(key, el) {
+  const state = loadState();
+  state.grocery = state.grocery || {};
+  state.grocery[key] = !state.grocery[key];
+  saveState(state);
+  el.classList.toggle('checked');
+  updateShopProgress();
+}
+
+function updateShopProgress() {
+  const state = loadState();
+  const g = state.grocery || {};
+  const total = GROCERIES.reduce((s,c) => s + c.items.length, 0);
+  const done = Object.values(g).filter(Boolean).length;
+  document.getElementById('shop-progress').textContent =
+    done === 0 ? 'Отмечай по мере покупки' :
+    done === total ? 'Всё куплено ⚡' :
+    `Куплено: ${done} из ${total}`;
+}
+
+function clearGrocery() {
+  const state = loadState();
+  state.grocery = {};
+  saveState(state);
+  renderGrocery();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderDayGrid();
+renderWorkout();
+</script>
+</body>
+</html>
