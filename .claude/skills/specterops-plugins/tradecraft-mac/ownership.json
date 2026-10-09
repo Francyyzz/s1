@@ -1,0 +1,12 @@
+{
+  "plugin": "tradecraft-mac",
+  "purpose": "macOS execution, persistence, and operator validation workflows.",
+  "status": "active",
+  "agents": [
+    "exploit-dev",
+    "poc-dev"
+  ],
+  "skills": [
+    "macos-initial-access"
+  ]
+}

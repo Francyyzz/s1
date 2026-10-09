@@ -1,0 +1,13 @@
+{
+  "plugin": "ops-sccm",
+  "purpose": "Microsoft Configuration Manager reconnaissance and takeover validation workflows.",
+  "status": "active",
+  "agents": [
+    "sccm-ops"
+  ],
+  "skills": [
+    "sccm-recon",
+    "sccm-takeover-relay",
+    "sccmhunter-install-local"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "plugin": "workflows-research",
+  "purpose": "Source-backed research and synthesis workflows for Specter Codex.",
+  "status": "active",
+  "agents": [
+    "researcher"
+  ],
+  "skills": [
+    "source-research"
+  ]
+}
